@@ -30,33 +30,49 @@ Decisions locked:
 
 ## Phase 1 — Speed Spike
 
-**Duration:** 1–2 週
 **Disposable:** 是。本 Phase 程式碼預期丟棄。
+**執行模式:** 本地僅編輯，build / test / bench 全在 GitHub Actions。
 
-### 目的
+> 拆成兩個子階段。1a 在 CI 即可驗證；1b 需要實體 GPU / 顯示器 / 鍵盤，先延後。
 
-在「**完全沒有 UI 框架**」的情況下，先證明速度天花板。確認 wgpu + winit + zip 解碼 + 圖像 pipeline 的端到端延遲達標。
+### Phase 1a — CPU-tier spike (現在做)
 
-### 範圍
+**Duration:** 1 週
 
-- `winit` + `wgpu`，無 Iced / Slint
-- 寫死讀取一個 `.zip` 檔（測試用，路徑硬編）
-- 雙頁顯示、左右方向鍵翻頁
-- 無 shelf、無設定、無美感、無錯誤處理
+**目的**：驗證圖像 pipeline 的 CPU 路徑符合預算 — archive read、decode、resize、cache、memory。不涉及 GPU、winit、輸入延遲。
 
-### 通過標準
+**範圍**：
+- CLI bench 工具（`spike` binary）
+- 生成 250 頁混合解析度合成 zip fixture（`gen_fixture` binary）
+- criterion 微基準（decode / resize）
+- 結構化 JSON 輸出，可累積追蹤
+
+**通過標準**（在 ubuntu-latest GHA runner 上跑）：
 
 | 指標 | 目標 | 量測方式 |
 |---|---|---|
-| KeyDown → frame present latency | ≤ 16ms (60Hz) | winit timestamp + wgpu present callback |
-| 翻頁時 frame drop | 0 drops | wgpu submission queue 觀察 |
-| 6000×4000 JPEG 冷解碼 | < 200ms | `std::time::Instant` |
-| 預解碼後翻頁 | < 1ms | 同上 |
-| 100 頁 zip 開檔→第一頁可見 | < 500ms | 同上 |
-| Idle CPU | ≈ 0% | OS task manager |
-| 5 頁 cache 記憶體 | < 500MB | OS task manager |
+| 6000×4000 JPEG 冷解碼 | < 200ms | spike + criterion |
+| 2400×3400 JPEG 冷解碼 | < 60ms | criterion |
+| Lanczos3 resize 至 1080p | < 30ms | criterion |
+| 250 頁 zip 開檔→第一頁解碼完 | < 500ms | spike |
+| 5 頁並行預解碼 (rayon) | < 400ms | spike |
+| 5 頁解碼後 working set | < 500MB | sysinfo |
+| Idle CPU（無事可做） | < 1% | sysinfo, 5 秒採樣 |
 
-任一指標未達 → 不進 Phase 2，先檢視瓶頸（解碼？wgpu upload？archive seek？）。
+任一指標未達 → 檢視 `image` crate decoder 配置、考慮 SIMD feature flag、或評估 turbojpeg 之類替代。
+
+### Phase 1b — GPU/input tier (延後)
+
+需要實體 GPU、實體 display、實體鍵盤。需在你 Windows 機器上跑。觸發時機：1a 通過 + 你有時間 + 願意承擔本地工具鏈安裝。
+
+**追加指標**：
+
+| 指標 | 目標 |
+|---|---|
+| KeyDown → frame present latency | ≤ 16ms (60Hz) |
+| 翻頁時 frame drop | 0 |
+| 預解碼後翻頁（GPU texture binding swap） | < 1ms |
+| Idle CPU（停在一頁） | ≈ 0% |
 
 ---
 

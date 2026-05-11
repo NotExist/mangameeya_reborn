@@ -1,0 +1,73 @@
+name: Bench
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'benches/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - '.github/workflows/bench.yml'
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  spike:
+    name: Phase 1 CPU spike
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Generate fixture (250 pages)
+        run: |
+          mkdir -p bench-data
+          cargo run --release --bin gen_fixture -- bench-data/fixture.zip 220 30
+          ls -lh bench-data/
+
+      - name: Run spike
+        run: |
+          cargo run --release --bin spike -- bench-data/fixture.zip \
+            | tee bench-data/metrics.json
+          echo "----- summary -----"
+          cat bench-data/metrics.json
+
+      - name: Upload metrics
+        uses: actions/upload-artifact@v4
+        with:
+          name: spike-metrics
+          path: bench-data/metrics.json
+          retention-days: 90
+
+  micro:
+    name: Criterion micro benches
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Run criterion benches
+        run: cargo bench --bench pipeline -- --output-format bencher | tee bench-data-out.txt
+        continue-on-error: false
+
+      - name: Upload bencher summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: criterion-bencher-summary
+          path: bench-data-out.txt
+          retention-days: 90
+
+      - name: Upload criterion HTML report
+        uses: actions/upload-artifact@v4
+        with:
+          name: criterion-html-report
+          path: target/criterion/
+          retention-days: 30
