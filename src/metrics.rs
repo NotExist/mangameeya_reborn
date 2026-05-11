@@ -40,12 +40,17 @@ pub struct ResourceUsage {
     pub peak_rss_mb: f64,
 }
 
+/// Nearest-rank percentile (1-indexed), clamped to `[0, n-1]`.
+///
+/// For `n = 100`, `p = 50` returns `sorted[49]`.
 pub fn percentile(sorted: &[f64], p: f64) -> f64 {
     if sorted.is_empty() {
         return 0.0;
     }
-    let idx = ((sorted.len() as f64 - 1.0) * p / 100.0).round() as usize;
-    sorted[idx.min(sorted.len() - 1)]
+    let n = sorted.len();
+    let raw = (p / 100.0 * n as f64).ceil() as usize;
+    let idx = raw.saturating_sub(1).min(n - 1);
+    sorted[idx]
 }
 
 #[cfg(test)]

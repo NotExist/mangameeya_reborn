@@ -24,7 +24,9 @@ pub fn synthesize_page(seed: u32, w: u32, h: u32) -> Vec<u8> {
             let n = (rng & 0x1f) as u8;
             let r = ((nx * 255.0) as u8).wrapping_add(r_off).wrapping_add(n);
             let g = ((ny * 255.0) as u8).wrapping_add(g_off).wrapping_add(n);
-            let b = (((nx + ny) * 127.0) as u8).wrapping_add(b_off).wrapping_add(n);
+            let b = (((nx + ny) * 127.0) as u8)
+                .wrapping_add(b_off)
+                .wrapping_add(n);
             buf.put_pixel(x, y, Rgb([r, g, b]));
         }
     }

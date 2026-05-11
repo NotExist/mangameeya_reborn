@@ -103,7 +103,10 @@ mod tests {
     fn natural_order_basic() {
         let mut v = vec!["page_10.jpg", "page_2.jpg", "page_1.jpg", "page_20.jpg"];
         v.sort_by(|a, b| natord_cmp(a, b));
-        assert_eq!(v, vec!["page_1.jpg", "page_2.jpg", "page_10.jpg", "page_20.jpg"]);
+        assert_eq!(
+            v,
+            vec!["page_1.jpg", "page_2.jpg", "page_10.jpg", "page_20.jpg"]
+        );
     }
 
     #[test]

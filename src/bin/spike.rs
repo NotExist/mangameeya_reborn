@@ -35,7 +35,10 @@ fn main() -> Result<()> {
     let mut src = ZipPageSource::open(&fixture_path)?;
     let zip_open_ms = t.elapsed().as_secs_f64() * 1000.0;
     let page_count = src.page_count();
-    eprintln!("[spike] opened {} entries in {:.2}ms", page_count, zip_open_ms);
+    eprintln!(
+        "[spike] opened {} entries in {:.2}ms",
+        page_count, zip_open_ms
+    );
     assert!(page_count > 0, "fixture has no pages");
 
     // ---- Phase B: first-page cold decode (proxy for startup → first frame) ----
@@ -104,8 +107,8 @@ fn main() -> Result<()> {
             }
         }
     }
-    decode_times.sort_by(|a, b| a.partial_cmp(b).unwrap());
-    resize_times.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    decode_times.sort_by(f64::total_cmp);
+    resize_times.sort_by(f64::total_cmp);
 
     // ---- Phase E: idle-CPU window (5 seconds with nothing happening) ----
     sys.refresh_processes(ProcessesToUpdate::Some(&[pid]), true);

@@ -28,11 +28,11 @@ fn main() -> Result<()> {
     let n_normal: u32 = args.get(2).and_then(|s| s.parse().ok()).unwrap_or(220);
     let n_extreme: u32 = args.get(3).and_then(|s| s.parse().ok()).unwrap_or(30);
 
-    if let Some(parent) = out.parent() {
-        if !parent.as_os_str().is_empty() {
-            std::fs::create_dir_all(parent)
-                .with_context(|| format!("creating {}", parent.display()))?;
-        }
+    if let Some(parent) = out.parent()
+        && !parent.as_os_str().is_empty()
+    {
+        std::fs::create_dir_all(parent)
+            .with_context(|| format!("creating {}", parent.display()))?;
     }
 
     let total = n_normal + n_extreme;
@@ -65,13 +65,11 @@ fn main() -> Result<()> {
         start.elapsed().as_secs_f64() * 1000.0
     );
 
-    let file =
-        File::create(&out).with_context(|| format!("creating {}", out.display()))?;
+    let file = File::create(&out).with_context(|| format!("creating {}", out.display()))?;
     let mut zip = ZipWriter::new(file);
     // JPEG is already compressed; storing without deflate is faster and barely
     // larger.
-    let opts =
-        SimpleFileOptions::default().compression_method(zip::CompressionMethod::Stored);
+    let opts = SimpleFileOptions::default().compression_method(zip::CompressionMethod::Stored);
 
     let mut total_bytes: usize = 0;
     for (name, bytes) in &pages {
