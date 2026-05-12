@@ -6,7 +6,7 @@
 //!
 //! Instruments KeyDown → submit-return latency, prints each event to stderr.
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 use mangameeya_reborn::{archive::ZipPageSource, decode};
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -62,7 +62,7 @@ struct GpuState {
 impl GpuState {
     async fn new(window: Arc<Window>) -> Result<Self> {
         let size = window.inner_size();
-        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::default());
+        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle());
         let surface = instance.create_surface(window.clone())?;
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
@@ -70,10 +70,18 @@ impl GpuState {
                 ..Default::default()
             })
             .await
-            .context("no compatible adapter")?;
+            .map_err(|e| anyhow::anyhow!("request_adapter failed: {e:?}"))?;
         let (device, queue) = adapter
-            .request_device(&wgpu::DeviceDescriptor::default())
-            .await?;
+            .request_device(&wgpu::DeviceDescriptor {
+                label: Some("page-device"),
+                required_features: wgpu::Features::empty(),
+                required_limits: wgpu::Limits::default(),
+                experimental_features: wgpu::ExperimentalFeatures::disabled(),
+                memory_hints: wgpu::MemoryHints::MemoryUsage,
+                trace: wgpu::Trace::Off,
+            })
+            .await
+            .map_err(|e| anyhow::anyhow!("request_device failed: {e:?}"))?;
         let caps = surface.get_capabilities(&adapter);
         let format = caps
             .formats
@@ -122,8 +130,8 @@ impl GpuState {
 
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("page-pl"),
-            bind_group_layouts: &[&bind_group_layout],
-            push_constant_ranges: &[],
+            bind_group_layouts: &[Some(&bind_group_layout)],
+            immediate_size: 0,
         });
 
         let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
@@ -238,6 +246,7 @@ impl GpuState {
                 label: Some("page-pass"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                     view: &view,
+                    depth_slice: None,
                     resolve_target: None,
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Clear(wgpu::Color {

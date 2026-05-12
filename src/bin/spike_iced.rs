@@ -1,4 +1,4 @@
-//! Phase 2 spike — Iced + image widget.
+//! Phase 2 spike — Iced 0.14 + image widget.
 //!
 //! Same flow as spike_gpu but UI is Iced. Useful for comparing Iced framework
 //! overhead against raw winit+wgpu (Phase 1b) and for validating CJK / IME
@@ -8,10 +8,11 @@
 //! Home = first, End = last, Esc = quit. Status bar shows current filename so
 //! CJK rendering is visible.
 
+use iced::event::{self, Event};
 use iced::keyboard::key::Named;
 use iced::keyboard::{self, Key};
 use iced::widget::{column, container, image, text};
-use iced::{Element, Length, Subscription, Task};
+use iced::{Element, Length, Size, Subscription, Task};
 use mangameeya_reborn::{archive::ZipPageSource, decode};
 use std::path::PathBuf;
 use std::sync::Mutex;
@@ -24,7 +25,6 @@ struct Reader {
     current_idx: usize,
     current_handle: Option<image::Handle>,
     status: String,
-    last_key_time: Option<Instant>,
 }
 
 #[derive(Debug, Clone)]
@@ -33,28 +33,27 @@ enum Message {
     KeyPressed(Key),
 }
 
-impl Reader {
-    fn new() -> (Self, Task<Message>) {
-        let fixture = PathBuf::from(
-            std::env::args()
-                .nth(1)
-                .or_else(|| std::env::var("MANGAMEEYA_BENCH_FIXTURE").ok())
-                .unwrap_or_else(|| "bench-fixture.zip".into()),
-        );
-        (
-            Self {
-                fixture,
-                source: None,
-                page_count: 0,
-                current_idx: 0,
-                current_handle: None,
-                status: "loading…".into(),
-                last_key_time: None,
-            },
-            Task::done(Message::LoadInitial),
-        )
-    }
+fn boot() -> (Reader, Task<Message>) {
+    let fixture = PathBuf::from(
+        std::env::args()
+            .nth(1)
+            .or_else(|| std::env::var("MANGAMEEYA_BENCH_FIXTURE").ok())
+            .unwrap_or_else(|| "bench-fixture.zip".into()),
+    );
+    (
+        Reader {
+            fixture,
+            source: None,
+            page_count: 0,
+            current_idx: 0,
+            current_handle: None,
+            status: "loading…".into(),
+        },
+        Task::done(Message::LoadInitial),
+    )
+}
 
+impl Reader {
     fn load_page(&mut self, idx: usize) {
         let Some(source) = self.source.as_ref() else {
             return;
@@ -100,7 +99,6 @@ impl Reader {
             }
             Message::KeyPressed(key) => {
                 let key_t0 = Instant::now();
-                self.last_key_time = Some(key_t0);
                 if self.page_count == 0 {
                     return Task::none();
                 }
@@ -150,13 +148,19 @@ impl Reader {
     }
 
     fn subscription(&self) -> Subscription<Message> {
-        keyboard::on_key_press(|key, _mods| Some(Message::KeyPressed(key)))
+        event::listen_with(|event, _status, _id| match event {
+            Event::Keyboard(keyboard::Event::KeyPressed { key, .. }) => {
+                Some(Message::KeyPressed(key))
+            }
+            _ => None,
+        })
     }
 }
 
 fn main() -> iced::Result {
-    iced::application("spike_iced", Reader::update, Reader::view)
+    iced::application(boot, Reader::update, Reader::view)
+        .title("spike_iced — MangaMeeya Reborn Phase 2")
         .subscription(Reader::subscription)
-        .window_size((1920.0, 1080.0))
-        .run_with(Reader::new)
+        .window_size(Size::new(1920.0, 1080.0))
+        .run()
 }
