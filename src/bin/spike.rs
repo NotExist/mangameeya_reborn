@@ -94,7 +94,7 @@ fn main() -> Result<()> {
         decode_times.push(t.elapsed().as_secs_f64() * 1000.0);
 
         let t = Instant::now();
-        let _resized = decode::resize_lanczos3(&img, 1920, 1080);
+        let _resized = decode::resize_lanczos3(&img, 1920, 1080)?;
         resize_times.push(t.elapsed().as_secs_f64() * 1000.0);
 
         if idx % 25 == 0 {

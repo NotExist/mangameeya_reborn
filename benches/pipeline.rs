@@ -56,7 +56,7 @@ fn bench_resize_lanczos(c: &mut Criterion) {
     let mut g = c.benchmark_group("resize_lanczos3");
     g.sample_size(30);
     g.bench_function("2400x3400_to_1080p", |b| {
-        b.iter(|| decode::resize_lanczos3(&img, 1920, 1080))
+        b.iter(|| decode::resize_lanczos3(&img, 1920, 1080).unwrap())
     });
     g.finish();
 }

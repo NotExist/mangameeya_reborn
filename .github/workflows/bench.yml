@@ -25,11 +25,23 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
 
-      - name: Generate fixture (250 pages)
+      - name: Prepare fixture
+        env:
+          # Set `BENCH_FIXTURE_URL` as a repo variable (Settings →
+          # Secrets and variables → Actions → Variables) to point at a real
+          # manga-shaped zip hosted outside the repo. Falls back to the
+          # synthetic fixture if unset.
+          BENCH_FIXTURE_URL: ${{ vars.BENCH_FIXTURE_URL }}
         run: |
           mkdir -p bench-data
-          cargo run --release --bin gen_fixture -- bench-data/fixture.zip 220 30
-          ls -lh bench-data/
+          if [ -n "$BENCH_FIXTURE_URL" ]; then
+            echo "Fetching fixture from \$BENCH_FIXTURE_URL"
+            curl -fsSL --retry 3 "$BENCH_FIXTURE_URL" -o bench-data/fixture.zip
+          else
+            echo "BENCH_FIXTURE_URL not set, falling back to synthetic fixture"
+            cargo run --release --bin gen_fixture -- bench-data/fixture.zip 220 30
+          fi
+          ls -lh bench-data/fixture.zip
 
       - name: Run spike
         run: |

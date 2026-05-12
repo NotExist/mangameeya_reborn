@@ -23,6 +23,13 @@
 2. [docs/architecture.md](docs/architecture.md) — 模組分層、`PageSource` trait、插件框架
 3. [docs/research/](docs/research/) — 原版分析、Susie 規格、框架對比、生態系研究
 
+## Bench fixture
+
+CPU spike benchmark expects a manga-shaped zip. Two ways to provide it:
+
+1. **Real fixture (preferred)** — set repo variable `BENCH_FIXTURE_URL` (Settings → Secrets and variables → Actions → Variables) to a URL hosting an actual zip. The Bench workflow fetches it on each run. Keeps potentially copyrighted content out of the repo.
+2. **Synthetic fallback** — if `BENCH_FIXTURE_URL` is unset, `gen_fixture` synthesises 250 pages of procedural noise. Compression ratio is poor on noise so the synthetic zip is ~1.3GB rather than the ~400MB a real manga would produce; decode/resize timings still hold relative meaning.
+
 ## Non-goals
 
 - 線上漫畫源（將透過 OPDS 串接既有 server，不重造 Mihon 生態）
