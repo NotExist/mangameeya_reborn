@@ -22,6 +22,8 @@
 1. [docs/plan.md](docs/plan.md) — 分階段執行計劃 (Phase 1 ~ 6)
 2. [docs/architecture.md](docs/architecture.md) — 模組分層、`PageSource` trait、插件框架
 3. [docs/research/](docs/research/) — 原版分析、Susie 規格、框架對比、生態系研究
+4. [docs/test-checklist.md](docs/test-checklist.md) — 實體機器測試清單（Phase 1b / Phase 2 需在你機器跑）
+5. [docs/backlog.md](docs/backlog.md) — 已知待改進事項
 
 ## Bench fixture
 

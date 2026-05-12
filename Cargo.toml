@@ -5,6 +5,12 @@ edition = "2024"
 description = "Modern Rust rewrite of MangaMeeya — Phase 1 disposable CPU spike"
 publish = false
 
+[features]
+default = []
+gpu-spike = ["dep:winit", "dep:wgpu", "dep:pollster", "dep:bytemuck"]
+iced-spike = ["dep:iced"]
+all-spikes = ["gpu-spike", "iced-spike"]
+
 [dependencies]
 anyhow = "1"
 fast_image_resize = { version = "5", features = ["image"] }
@@ -15,12 +21,29 @@ sysinfo = { version = "0.32", default-features = false, features = ["system"] }
 zip = { version = "2", default-features = false, features = ["deflate"] }
 rayon = "1"
 
+# Phase 1b GPU spike
+winit = { version = "0.30", optional = true }
+wgpu = { version = "23", optional = true }
+pollster = { version = "0.4", optional = true }
+bytemuck = { version = "1", optional = true, features = ["derive"] }
+
+# Phase 2 Iced spike
+iced = { version = "0.13", optional = true, features = ["image", "advanced"] }
+
 [dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }
 
 [[bench]]
 name = "pipeline"
 harness = false
+
+[[bin]]
+name = "spike_gpu"
+required-features = ["gpu-spike"]
+
+[[bin]]
+name = "spike_iced"
+required-features = ["iced-spike"]
 
 [profile.release]
 lto = "thin"
