@@ -234,7 +234,17 @@ impl GpuState {
     }
 
     fn render(&self) -> Result<()> {
-        let frame = self.surface.get_current_texture()?;
+        let frame = match self.surface.get_current_texture() {
+            wgpu::CurrentSurfaceTexture::Success(t) => t,
+            wgpu::CurrentSurfaceTexture::Suboptimal(t) => {
+                eprintln!("[spike_gpu] suboptimal surface — should reconfigure");
+                t
+            }
+            other => {
+                eprintln!("[spike_gpu] surface acquire failed: {other:?}");
+                return Ok(());
+            }
+        };
         let view = frame
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());
