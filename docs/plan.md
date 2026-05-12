@@ -35,11 +35,26 @@ Decisions locked:
 
 > 拆成兩個子階段。1a 在 CI 即可驗證；1b 需要實體 GPU / 顯示器 / 鍵盤，先延後。
 
-### Phase 1a — CPU-tier spike (現在做)
+### Phase 1a — CPU-tier spike ✓ closed (2026-05-12)
 
-**Duration:** 1 週
+**Duration:** 1 天
 
 **目的**：驗證圖像 pipeline 的 CPU 路徑符合預算 — archive read、decode、resize、cache、memory。不涉及 GPU、winit、輸入延遲。
+
+**通過狀態**：
+
+| 指標 | 目標 | 實測 | 結論 |
+|---|---|---|---|
+| zip 開檔 | - | 0.84ms | ✓ |
+| startup → 首頁可見 | < 500ms | 79ms | ✓ |
+| 5 頁並行預載 (rayon) | < 400ms | 187ms | ✓ |
+| Idle CPU | < 1% | 0.0% | ✓ |
+| 5 頁 cache 後 working set | < 500MB | 167MB | ✓ |
+| Lanczos3 resize p50 | < 30ms | 19ms | ✓ (fast_image_resize) |
+| 2400×3400 JPEG cold decode | < 60ms | 75ms | ⚠ → 列入 [backlog](backlog.md) |
+| 6000×4000 JPEG cold decode | < 200ms | 222ms | ⚠ → 列入 [backlog](backlog.md) |
+
+JPEG decode 略超目標、但 (a) GHA runner 雜訊大、(b) 真實使用被預讀吸收。延後優化，見 [docs/backlog.md](backlog.md)。
 
 **範圍**：
 - CLI bench 工具（`spike` binary）
