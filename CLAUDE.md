@@ -11,6 +11,9 @@ Reimplement **マンガミーヤ** as a fast, native, single-folder-portable des
 1. **UI framework code is isolated.** Anything that imports `iced` / `slint` lives in `crates/ui/` (or equivalent). `core`, `plugin-host`, `source`, `decode`, `keymap`, `config` are framework-agnostic and must compile without the UI crate.
    *Reason:* CJK / IME testing in Phase 2 may force a switch from Iced to Slint. The cost of that switch must be a rewrite of one crate, not the whole app.
 
+1a. **Render backend is isolated behind `PageRenderer` trait.** Only `crates/render/` (or equivalent) may `use wgpu`. Other crates operate through the trait. A `SoftwareRenderer` impl will be added in Phase 5 for legacy-Windows (Win7) builds via Cargo feature `legacy-windows`.
+   *Reason:* The developer is a Win7 user; original MangaMeeya's Shift-JIS / Unicode issues are unpatchable. The rewrite must preserve a path to ship a working Win7 binary even if its renderer is downgraded to software. XP is not supported.
+
 2. **No external runtime dependencies in the shipped artifact.** No GTK DLLs, no Qt, no system WebView, no VC++ redistributable. Static-link the MSVC CRT on Windows (`-C target-feature=+crt-static`). Acceptable: native OS graphics APIs (Vulkan / Metal / DX12) — those are the OS itself.
 
 3. **Single-folder portable.** All config, cache, plugins, logs live under the application folder by default (relative to the exe). No `%APPDATA%`, no `XDG_*` writes unless the user opts in. Honour `MANGAMEEYA_HOME` env var as override.

@@ -12,13 +12,15 @@ Decisions locked:
 |---|---|
 | 形態 | 原生桌面 Rust 應用，不走 WebView |
 | 主框架 | Iced (0.14+)，Slint 為 CJK/IME 落敗時的備援 |
-| 平台 | Windows-first，三平台保留空間 |
+| 平台主目標 | Win10+ / macOS 10.13+ / Linux 現代發行版 |
+| **Legacy Windows (Win7)** | **架構保留路徑** — `PageRenderer` trait + `legacy-windows` Cargo feature。Phase 5 加 cross-compile artifact (Tier 3 `x86_64-win7-windows-msvc` target)。best-effort、無 GHA 自動測試、由 Win7 user 親自驗證。XP 不支援 |
 | 發佈 | 自用 → 可能開源 → 不轉商用 |
 | 設定格式 | TOML |
 | 分發形態 | 單資料夾 portable |
 | MVP 範圍 | 最近開過 + 即時縮圖（無書庫） |
 | 格式支援 | 內建 zip/cbz/常見圖像；其餘走 WASM 插件 |
 | 跨平台 plug-in | WASM (wasmtime) |
+| Filter chain plug-in | 受原版 Avisynth pipeline 啟發，Phase 4 引入。Plug-in kind 多一類 `filter` |
 | Windows 相容路徑 | Susie `.spi` shim（Phase 4） |
 | 線上來源 | OPDS client（Phase 6），非 Mihon extension 重造 |
 | 網路掛載 | 透明（OS 處理），async I/O discipline |
@@ -132,7 +134,8 @@ JPEG decode 略超目標、但 (a) GHA runner 雜訊大、(b) 真實使用被預
 | `mm-plugin-sdk` | Rust crate，定義 WASM plug-in trait + ABI（給插件作者用） |
 | `mm-plugin-host` | wasmtime 載入器、權能管理、統一 `FormatPlugin` 介面 |
 | `mm-source` | `LocalFolderSource`、`ZipSource`（內建 source impl） |
-| `mm-decode` | rayon worker pool、LRU GPU texture cache、預讀 N±2 策略 |
+| `mm-decode` | rayon worker pool、decoded-bytes cache (~50 entries)、預讀 N±2 策略 |
+| **`mm-render`** | **`PageRenderer` trait + `WgpuRenderer` impl。唯一能 `use wgpu` 的 crate。Phase 5 在這加 `SoftwareRenderer` impl** |
 | `mm-keymap` | Action enum、TOML 持久化、預設 binding（模仿原版） |
 | `mm-config` | TOML 設定載入、portable 路徑解析、env override |
 | `mm-recent` | 最近開過清單（JSON，< 100 entries，不需 SQLite） |
@@ -158,35 +161,48 @@ JPEG decode 略超目標、但 (a) GHA runner 雜訊大、(b) 真實使用被預
 
 ---
 
-## Phase 4 — Plugin Ecosystem + Polish
+## Phase 4 — Plugin Ecosystem + Filter Chain + Polish
 
 **Duration:** 3 週
 
-### Plug-in
+### Format / Archive plug-in
 
 - 官方 WASM 插件：RAR、7z、PDF（pdfium WASM port 或 mupdf）
 - Susie `.spi` shim（Windows only，相容遷移路徑）
 - Plug-in discovery（掃描 `./plugins/`）
 - Plug-in 設定 UI（啟用/停用、優先序、版本顯示）
 
+### Filter chain (受原版 Avisynth pipeline 啟發)
+
+詳見 [architecture.md → Filter chain](architecture.md#filter-chain-phase-4--受-avisynth-pipeline-啟發)。
+
+- Plug-in kind 新增 `filter`
+- Built-in filters：`lanczos3_resize`、`mitchell_resize`、`warpsharp`、`unsharp_mask`、`color_adjust`、`wavelet_denoise`、`rotate_*`、`flip_*`、`crop_borders`
+- Filter profile（多個 chain 組合）走 `mangameeya.toml [[filter_profile]]`
+- 切換 profile 是 keyboard shortcut
+- 熱路徑（resize）不走 WASM；走 fast_image_resize (CPU) 或 wgpu shader (GPU)
+- 第三方 filter 透過 WASM plug-in
+
 ### Polish
 
 - Lanczos / Mitchell GPU fragment shader（取代 wgpu 預設 bilinear）
 - 即時縮圖 memory LRU 快取（不落地）
-- 設定 UI（keymap editor、濾鏡選擇、預讀策略、字型）
+- 設定 UI（keymap editor、filter profile、預讀策略、字型）
 - 拖放開檔、剪貼簿貼圖、Windows context menu
 
 ### 通過標準
 
-- 至少 3 個官方 WASM 插件可用（zip/cbz 內建不算）
+- 至少 3 個官方 WASM 格式插件可用（zip/cbz 內建不算）
+- 至少 3 個 built-in filter 可用（lanczos、warpsharp、color_adjust）
 - Susie shim 能載入常見 .spi（aimg、ax7z、unrar.spi 等）
 - 縮放濾鏡可從設定切換並肉眼可見差異
+- 至少 3 個 filter profile 預設出貨（line art / screentone / colour page）
 
 ---
 
 ## Phase 5 — CI/CD + Packaging
 
-**Duration:** 1.5 週
+**Duration:** 2 週（多了 legacy-windows 一條線）
 
 ### CI
 
@@ -195,6 +211,29 @@ JPEG decode 略超目標、但 (a) GHA runner 雜訊大、(b) 真實使用被預
 - Windows: `-C target-feature=+crt-static`
 - macOS: universal binary (`aarch64` + `x86_64`)
 - Linux: 單一動態 binary + AppImage
+
+### Legacy-Windows cross-compile (新增)
+
+獨立 GHA job：`build-legacy-windows`
+
+- Runner: `ubuntu-latest`（或 `windows-latest`）+ `rustup target add x86_64-win7-windows-msvc`
+- Build：`cargo build --release --no-default-features --features legacy-windows --target x86_64-win7-windows-msvc`
+- 不跑 `cargo test`（GHA 無 Win7 runner，無法執行）
+- Artifact：`mangameeya-{version}-win7-best-effort.zip`
+- Release notes 明確標 **best-effort、unsupported、Win7 user 自行測試**
+
+驗證流程（人工，由 Win7 user 進行）：
+1. 拿 cross-compile 出來的 .exe 到 Win7 機器
+2. 確認能啟動（不掉 DLL、不秒崩）
+3. 確認能開檔讀 zip
+4. 確認 CJK 檔名正確顯示（**這是 Win7 user 從原版搬過來的主要動機**）
+5. 確認鍵盤翻頁可用
+6. **效能**不要求達到 Phase 1a 目標，但要可用（翻頁 < 100ms 大致 OK）
+
+預期已知限制：
+- 不支援 wgpu（fallback 到 software renderer）
+- 沒 HiDPI 銳利度（softbuffer 是 96 DPI baseline）
+- 可能某些依賴 crate 內部呼叫了 Win10+ API，需逐一發現並繞過或 patch
 
 ### Portable layout
 
@@ -211,18 +250,20 @@ mangameeya/
 ### Release
 
 - GitHub Releases 自動發佈（tag-driven）
-- 三平台 zip：`mangameeya-{version}-{platform}.zip`
+- 主流平台 zip：`mangameeya-{version}-{win10/macos/linux}.zip`
+- Legacy zip：`mangameeya-{version}-win7-best-effort.zip`
 - 自動 update check（讀 GH Releases API，僅提示不下載）
 
 ### Docs
 
 - mdBook source → GitHub Pages
-- 內容：使用者文件、插件作者文件、keymap 自訂指南
+- 內容：使用者文件、插件作者文件、keymap 自訂指南、**legacy-windows 注意事項**
 
 ### 通過標準
 
-- 拿 zip 到完全乾淨的 OS（VM）執行：零安裝、雙擊即跑
+- 拿主流平台 zip 到完全乾淨的 OS（VM）執行：零安裝、雙擊即跑
 - CI 全綠至少跑 1 週無 flake
+- Legacy-Windows binary 在 Win7 user 機器上能開、能讀、CJK 檔名正確
 
 ---
 
