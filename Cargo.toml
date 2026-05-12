@@ -23,12 +23,12 @@ rayon = "1"
 
 # Phase 1b GPU spike
 winit = { version = "0.30", optional = true }
-wgpu = { version = "23", optional = true }
+wgpu = { version = "29", optional = true }
 pollster = { version = "0.4", optional = true }
 bytemuck = { version = "1", optional = true, features = ["derive"] }
 
 # Phase 2 Iced spike
-iced = { version = "0.13", optional = true, features = ["image", "advanced"] }
+iced = { version = "0.14", optional = true, features = ["image", "advanced"] }
 
 [dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }

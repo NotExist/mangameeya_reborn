@@ -62,7 +62,7 @@ struct GpuState {
 impl GpuState {
     async fn new(window: Arc<Window>) -> Result<Self> {
         let size = window.inner_size();
-        let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor::default());
+        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::default());
         let surface = instance.create_surface(window.clone())?;
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
@@ -148,7 +148,7 @@ impl GpuState {
             primitive: wgpu::PrimitiveState::default(),
             depth_stencil: None,
             multisample: wgpu::MultisampleState::default(),
-            multiview: None,
+            multiview_mask: None,
             cache: None,
         });
 
@@ -251,7 +251,8 @@ impl GpuState {
                 })],
                 depth_stencil_attachment: None,
                 timestamp_writes: None,
-                occlusion_query_writes: None,
+                occlusion_query_set: None,
+                multiview_mask: None,
             });
             pass.set_pipeline(&self.pipeline);
             if let Some(bg) = &self.current_bind_group {
