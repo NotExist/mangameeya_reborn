@@ -95,11 +95,15 @@ impl App {
         let Some(surface) = self.surface.as_mut() else {
             return Ok(());
         };
-        surface.resize(
-            NonZeroU32::new(win_w).expect("win_w nonzero"),
-            NonZeroU32::new(win_h).expect("win_h nonzero"),
-        )?;
-        let mut buffer = surface.buffer_mut()?;
+        surface
+            .resize(
+                NonZeroU32::new(win_w).expect("win_w nonzero"),
+                NonZeroU32::new(win_h).expect("win_h nonzero"),
+            )
+            .map_err(|e| anyhow::anyhow!("softbuffer resize: {e:?}"))?;
+        let mut buffer = surface
+            .buffer_mut()
+            .map_err(|e| anyhow::anyhow!("softbuffer buffer_mut: {e:?}"))?;
 
         // Background — dark grey
         let bg: u32 = 0x000d_0d0d;
@@ -134,7 +138,9 @@ impl App {
             }
         }
 
-        buffer.present()?;
+        buffer
+            .present()
+            .map_err(|e| anyhow::anyhow!("softbuffer present: {e:?}"))?;
         Ok(())
     }
 }
