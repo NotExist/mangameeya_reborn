@@ -31,11 +31,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install nightly toolchain + Win7 target
+      - name: Install nightly toolchain (rust-src for build-std)
         uses: dtolnay/rust-toolchain@nightly
         with:
-          targets: x86_64-win7-windows-msvc
           components: rust-src
+        # Note: do NOT use `targets: x86_64-win7-windows-msvc` — rust-std is
+        # not precompiled for this Tier 3 target. We let `-Z build-std`
+        # rebuild std from rust-src instead. The target spec itself is
+        # built into rustc since 1.78.
 
       - uses: Swatinem/rust-cache@v2
         with:
