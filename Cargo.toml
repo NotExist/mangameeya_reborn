@@ -9,7 +9,12 @@ publish = false
 default = []
 gpu-spike = ["dep:winit", "dep:wgpu", "dep:pollster", "dep:bytemuck"]
 iced-spike = ["dep:iced"]
-all-spikes = ["gpu-spike", "iced-spike"]
+software-spike = ["dep:winit", "dep:softbuffer"]
+# Meta-feature for legacy Windows (Win7) build. Currently identical to
+# software-spike; reserved for future legacy-only branches (font fallback,
+# Win32 conditional code, etc.).
+legacy-windows = ["software-spike"]
+all-spikes = ["gpu-spike", "iced-spike", "software-spike"]
 
 [dependencies]
 anyhow = "1"
@@ -30,6 +35,9 @@ bytemuck = { version = "1", optional = true, features = ["derive"] }
 # Phase 2 Iced spike
 iced = { version = "0.14", optional = true, features = ["image", "advanced"] }
 
+# Phase 1b/5 software-renderer spike (legacy Windows-friendly)
+softbuffer = { version = "0.4", optional = true }
+
 [dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }
 
@@ -44,6 +52,10 @@ required-features = ["gpu-spike"]
 [[bin]]
 name = "spike_iced"
 required-features = ["iced-spike"]
+
+[[bin]]
+name = "spike_software"
+required-features = ["software-spike"]
 
 [profile.release]
 lto = "thin"

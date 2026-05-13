@@ -12,8 +12,11 @@ CI 上跑不出來的事項，集中在這裡，待你有實體 Windows / Mac / 
 
 從 GHA 抓最新 CI artifact，或 local clone + `cargo build --release --features all-spikes`：
 
-- spike_gpu — Phase 1b 純 winit+wgpu，**延遲天花板基準**
-- spike_iced — Phase 2 Iced+image widget，**框架成本量測**
+- spike_gpu — Phase 1b 純 winit+wgpu，**延遲天花板基準**（需 Win10+ / DX12 或 Vulkan）
+- spike_iced — Phase 2 Iced+image widget，**框架成本量測**（需現代 GPU 環境）
+- spike_software — winit + softbuffer 純 CPU 渲染，**Win7+ legacy 路徑驗證**
+
+**Win7 special**: 從 `Legacy Windows` workflow 的 artifact `spike_software-win7-best-effort` 下載。這是用 Tier 3 `x86_64-win7-windows-msvc` target 跨編譯產生的 .exe，**與一般 spike_software 不同**（理論上是同一個 source code，但跨編譯對象是 Win7 baseline）。
 
 ### 0.2 準備 fixture
 
@@ -22,7 +25,7 @@ bench fixture 不在 repo。三選一：
 - **option B**：執行 `cargo run --release --bin gen_fixture -- ./bench-fixture.zip` 產生合成 fixture（~1.3GB，無 CJK 檔名）
 - **option C**：設環境變數 `MANGAMEEYA_BENCH_FIXTURE=/path/to/your.zip`
 
-兩個 spike binary 都接受 `<fixture-path>` 為第一參數或讀 env。
+所有 spike binary 都接受 `<fixture-path>` 為第一參數或讀 env。
 
 ### 0.3 記錄環境
 
@@ -192,6 +195,78 @@ spike_iced 最大: _____ ms
 ### 2.5 視窗 resize 行為
 
 與 1.4 相同。
+
+---
+
+## 2.5 Phase 5 — spike_software (legacy / Win7 path)
+
+### 2.5.1 啟動 + 首頁顯示（Win10+ 環境也可先測，當 sanity check）
+
+**目的**：確認 softbuffer 軟體渲染路徑能跑。在你日常使用的 Win10/Mac/Linux 環境先確認，是先排除明顯 bug 的步驟。
+
+**步驟**：
+```
+./spike_software /path/to/fixture.zip
+```
+
+**記錄**：
+- ✅ / ❌ 視窗開出來
+- ✅ / ❌ 第一頁圖像正常顯示
+- 視覺感受：與 spike_gpu 相比清晰度差距 _____ （tiny-skia/softbuffer 沒 GPU shader 但仍是 fast_image_resize Lanczos3）
+- 啟動秒數：_____
+
+### 2.5.2 KeyDown → present 延遲
+
+**目的**：軟體渲染天花板，與 spike_gpu / spike_iced 對比。
+
+**步驟**：同 1.2、2.2，左方向鍵連按 10 次，把 stderr `[spike_software] KeyDown→present` 行抓出來。
+
+**記錄**：
+```
+中位數: _____ ms
+最大: _____ ms
+```
+
+**通過條件**：
+- 中位數 ≤ 50ms (軟體渲染容許比 GPU 慢，但翻頁不能卡)
+- 主觀「按下即翻」雖不及 spike_gpu，仍可接受
+
+### 2.5.3 **Win7 實機**（最重要一項）
+
+**目的**：驗證 cross-compile 出來的 binary 真的能在 Win7 跑、CJK 正確、可閱讀。**這是專案策略性目標的最終驗證**。
+
+**前置**：從 GHA `Legacy Windows` workflow 抓 `spike_software-win7-best-effort` artifact，把 `spike_software.exe` 拷到 Win7 機器。
+
+**步驟**：
+1. 在 Win7 雙擊或命令列：`spike_software.exe path\to\fixture.zip`
+2. 觀察：
+   - ✅ / ❌ 啟動：不掉 DLL、不秒崩、視窗正常開出
+   - ✅ / ❌ 第一頁圖像正常顯示
+   - ✅ / ❌ 鍵盤翻頁可用（←、→、Space、Home、End、Esc）
+   - ✅ / ❌ **CJK 檔名正確顯示**（這是放棄原版 マンガミーヤ 換新版的主要動機）
+   - ✅ / ❌ 視窗縮放正確重繪
+3. 翻頁延遲（主觀）：_____ ms 等級
+4. **任何崩潰、缺 DLL、API 找不到的訊息**：完整貼上 _____ 
+
+**通過條件**：
+- 啟動且首頁可見：必須 ✓
+- 鍵盤翻頁可用：必須 ✓
+- CJK 檔名正確：必須 ✓（這是 raison d'être）
+- 翻頁延遲：< 100ms 主觀可接受
+- 沒有崩潰
+
+**如果失敗**：
+- 列出失敗模式（DLL 缺失、API 找不到、視窗無法建立、軟體渲染畫面異常等）
+- 我會根據訊息回到 backlog.md 的「Legacy Windows」項，依優先序處理（多半是某個 crate 呼叫了 Win10+ API，需 patch 或繞過）
+- **這是 best-effort，失敗是預期可能性之一，不影響主要 Win10+ 路線**
+
+### 2.5.4 與原版 マンガミーヤ on Win7 對比
+
+如果你有原版可以同時跑：
+- 啟動速度：原版 _____ s vs 重寫版 _____ s
+- 翻頁手感：原版 _____ vs 重寫版 _____ （主觀打 1-10 分）
+- CJK 檔名：原版 _____ vs 重寫版 _____ （這項重寫版應該明顯贏）
+- 大 zip 開啟（> 1GB）：原版會崩嗎？重寫版？
 
 ---
 

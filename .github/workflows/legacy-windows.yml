@@ -1,0 +1,79 @@
+name: Legacy Windows
+
+# Tier 3 cross-compile to x86_64-win7-windows-msvc.
+# This workflow is **best-effort**. It may fail on dep-version churn. Failures
+# do NOT block the main CI gate — this workflow runs independently.
+#
+# Successful artifact is downloadable by a Win7 user to test the spike binary
+# on real hardware.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - '.github/workflows/legacy-windows.yml'
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  build:
+    name: Cross-compile spike_software (Win7 Tier 3)
+    runs-on: windows-latest
+    # Win7 Tier 3 target is officially unsupported — let this fail without
+    # affecting the main CI gate.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install nightly toolchain + Win7 target
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          targets: x86_64-win7-windows-msvc
+          components: rust-src
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: legacy-windows
+
+      - name: Show toolchain
+        run: |
+          rustc --version --verbose
+          cargo --version --verbose
+
+      - name: Build spike_software for Win7
+        shell: pwsh
+        env:
+          # panic=abort matches build-std=std,panic_abort; smaller binary,
+          # no unwind tables. Acceptable for a spike.
+          RUSTFLAGS: -C panic=abort
+        run: |
+          cargo +nightly build --release `
+            --target x86_64-win7-windows-msvc `
+            --no-default-features --features legacy-windows `
+            --bin spike_software `
+            -Z build-std=std,panic_abort
+
+      - name: Inspect produced binary
+        shell: pwsh
+        run: |
+          $exe = "target/x86_64-win7-windows-msvc/release/spike_software.exe"
+          if (Test-Path $exe) {
+            Get-Item $exe | Select-Object Name, Length, LastWriteTime
+          } else {
+            Write-Error "spike_software.exe not produced"
+            exit 1
+          }
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: spike_software-win7-best-effort
+          path: target/x86_64-win7-windows-msvc/release/spike_software.exe
+          if-no-files-found: error
+          retention-days: 30
