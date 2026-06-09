@@ -164,7 +164,7 @@ file = "rar_archive.wasm"
 
 ```rust
 // Plug-in author writes Rust → compile to wasm32-wasi
-#[mangameeya_plugin::plugin]
+#[hamana_plugin::plugin]
 impl ArchivePlugin for RarPlugin {
     fn supported_extensions() -> &'static [&'static str] {
         &["rar", "cbr"]
@@ -211,7 +211,7 @@ kind = "filter"    # 圖像 post-decode 處理（resize / sharpen / colour）
 ### Filter trait（WASM 端）
 
 ```rust
-#[mangameeya_plugin::plugin]
+#[hamana_plugin::plugin]
 impl ImageFilter for WarpSharpFilter {
     fn name() -> &'static str { "warpsharp" }
 
@@ -231,7 +231,7 @@ impl ImageFilter for WarpSharpFilter {
 ### Filter profile（使用者層）
 
 ```toml
-# mangameeya.toml
+# hamana.toml
 [[filter_profile]]
 name = "Manga (line art)"
 chain = [
@@ -304,7 +304,7 @@ RGBA bytes
 | Software framebuffer | RAM | 1 current | 1 | legacy backend 不需多重 |
 | Thumbnails | RAM | LRU | ~200 entries (small) | |
 
-設定可調，default 上面數字。`mangameeya.toml [performance]` 段使用者可改。
+設定可調，default 上面數字。`hamana.toml [performance]` 段使用者可改。
 
 預讀策略：根據 reading direction 與閱讀速度，預測下 N±2 頁，丟 worker pool 預先走過 pipeline 到 PageRenderer 的 upload stage。
 
@@ -334,7 +334,7 @@ Chord（多鍵序列）支援是 nice-to-have，Phase 3 內若時間允許就做
 ## Config schema
 
 ```toml
-# mangameeya.toml
+# hamana.toml
 [reader]
 default_mode = "dual_rtl"   # dual_rtl | dual_ltr | single
 fit_mode = "fit_window"     # fit_window | fit_width | fit_height | actual
@@ -366,9 +366,9 @@ cache_dir = "./cache"
 ## Portable layout (recap)
 
 ```
-mangameeya/
-├─ mangameeya.exe (Win) | mangameeya.app (mac) | mangameeya (Linux)
-├─ mangameeya.toml
+hamana/
+├─ hamana.exe (Win) | hamana.app (mac) | hamana (Linux)
+├─ hamana.toml
 ├─ keymap.toml
 ├─ recent.json
 ├─ plugins/
@@ -384,7 +384,7 @@ mangameeya/
 └─ logs/
 ```
 
-Override via `MANGAMEEYA_HOME=/some/path` 或 `-c /some/path/config.toml`。
+Override via `HAMANA_HOME=/some/path` 或 `-c /some/path/config.toml`。
 
 ## Threading model
 

@@ -178,7 +178,7 @@ JPEG decode 略超目標、但 (a) GHA runner 雜訊大、(b) 真實使用被預
 
 - Plug-in kind 新增 `filter`
 - Built-in filters：`lanczos3_resize`、`mitchell_resize`、`warpsharp`、`unsharp_mask`、`color_adjust`、`wavelet_denoise`、`rotate_*`、`flip_*`、`crop_borders`
-- Filter profile（多個 chain 組合）走 `mangameeya.toml [[filter_profile]]`
+- Filter profile（多個 chain 組合）走 `hamana.toml [[filter_profile]]`
 - 切換 profile 是 keyboard shortcut
 - 熱路徑（resize）不走 WASM；走 fast_image_resize (CPU) 或 wgpu shader (GPU)
 - 第三方 filter 透過 WASM plug-in
@@ -219,7 +219,7 @@ JPEG decode 略超目標、但 (a) GHA runner 雜訊大、(b) 真實使用被預
 - Runner: `ubuntu-latest`（或 `windows-latest`）+ `rustup target add x86_64-win7-windows-msvc`
 - Build：`cargo build --release --no-default-features --features legacy-windows --target x86_64-win7-windows-msvc`
 - 不跑 `cargo test`（GHA 無 Win7 runner，無法執行）
-- Artifact：`mangameeya-{version}-win7-best-effort.zip`
+- Artifact：`hamana-{version}-win7-best-effort.zip`
 - Release notes 明確標 **best-effort、unsupported、Win7 user 自行測試**
 
 驗證流程（人工，由 Win7 user 進行）：
@@ -238,9 +238,9 @@ JPEG decode 略超目標、但 (a) GHA runner 雜訊大、(b) 真實使用被預
 ### Portable layout
 
 ```
-mangameeya/
-├─ mangameeya.exe (或對應平台 binary)
-├─ mangameeya.toml      # 預設設定
+hamana/
+├─ hamana.exe (或對應平台 binary)
+├─ hamana.toml      # 預設設定
 ├─ keymap.toml          # 預設 keymap
 ├─ plugins/             # WASM 插件
 ├─ susie/               # (Windows) .spi 插件
@@ -250,8 +250,8 @@ mangameeya/
 ### Release
 
 - GitHub Releases 自動發佈（tag-driven）
-- 主流平台 zip：`mangameeya-{version}-{win10/macos/linux}.zip`
-- Legacy zip：`mangameeya-{version}-win7-best-effort.zip`
+- 主流平台 zip：`hamana-{version}-{win10/macos/linux}.zip`
+- Legacy zip：`hamana-{version}-win7-best-effort.zip`
 - 自動 update check（讀 GH Releases API，僅提示不下載）
 
 ### Docs

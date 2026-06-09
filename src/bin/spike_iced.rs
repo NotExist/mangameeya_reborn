@@ -13,7 +13,7 @@ use iced::keyboard::key::Named;
 use iced::keyboard::{self, Key};
 use iced::widget::{column, container, image, text};
 use iced::{Element, Length, Size, Subscription, Task};
-use mangameeya_reborn::{archive::ZipPageSource, decode};
+use hamana_reborn::{archive::ZipPageSource, decode};
 use std::path::PathBuf;
 use std::sync::Mutex;
 use std::time::Instant;
@@ -37,7 +37,7 @@ fn boot() -> (Reader, Task<Message>) {
     let fixture = PathBuf::from(
         std::env::args()
             .nth(1)
-            .or_else(|| std::env::var("MANGAMEEYA_BENCH_FIXTURE").ok())
+            .or_else(|| std::env::var("HAMANA_BENCH_FIXTURE").ok())
             .unwrap_or_else(|| "bench-fixture.zip".into()),
     );
     (
@@ -159,7 +159,7 @@ impl Reader {
 
 fn main() -> iced::Result {
     iced::application(boot, Reader::update, Reader::view)
-        .title("spike_iced — MangaMeeya Reborn Phase 2")
+        .title("spike_iced — Hamana Reborn Phase 2")
         .subscription(Reader::subscription)
         .window_size(Size::new(1920.0, 1080.0))
         .run()

@@ -1,10 +1,14 @@
-# MangaMeeya Reborn — Agent Guidance
+# Hamana Reborn — Agent Guidance
 
 > Project's irreducible conventions. The plan lives in `docs/plan.md`; architecture in `docs/architecture.md`. Read those first.
 
 ## Project intent
 
-Reimplement **マンガミーヤ** as a fast, native, single-folder-portable desktop manga reader in Rust. Speed and keyboard ergonomics are non-negotiable. CJK / IME quality is non-negotiable.
+Build a **Hamana-style** (宮野牧人, 2006) native, single-folder-portable desktop image/manga viewer in Rust. The defining UI is Hamana's: floating auto-hide overlay (top thumbnails, bottom-right IMAGE SEEK BAR), maximum image area, GPU-accelerated zoom/pan with zero perceptible lag.
+
+Archive format support (ZIP/CBZ/RAR/CBR direct read) and keyboard-first navigation are borrowed from **マンガミーヤ (mangameeya)**, also abandoned. mangameeya is treated only as a design reference here, not as a reimplementation target.
+
+Speed and keyboard ergonomics are non-negotiable. CJK / IME quality is non-negotiable.
 
 ## Hard architectural rules
 
@@ -16,7 +20,7 @@ Reimplement **マンガミーヤ** as a fast, native, single-folder-portable des
 
 2. **No external runtime dependencies in the shipped artifact.** No GTK DLLs, no Qt, no system WebView, no VC++ redistributable. Static-link the MSVC CRT on Windows (`-C target-feature=+crt-static`). Acceptable: native OS graphics APIs (Vulkan / Metal / DX12) — those are the OS itself.
 
-3. **Single-folder portable.** All config, cache, plugins, logs live under the application folder by default (relative to the exe). No `%APPDATA%`, no `XDG_*` writes unless the user opts in. Honour `MANGAMEEYA_HOME` env var as override.
+3. **Single-folder portable.** All config, cache, plugins, logs live under the application folder by default (relative to the exe). No `%APPDATA%`, no `XDG_*` writes unless the user opts in. Honour `HAMANA_HOME` env var as override.
 
 4. **`PageSource` is async from day 1**, even if MVP only fills it with local sources. Phase 6 adds OPDS — the trait must not need a breaking change.
 
@@ -29,7 +33,7 @@ Reimplement **マンガミーヤ** as a fast, native, single-folder-portable des
 ## Configuration
 
 - **Format: TOML.** Not JSON, not YAML. Human-editable, supports comments, mature Rust tooling.
-- **Location: `./mangameeya.toml`** next to the exe, overridable via `MANGAMEEYA_HOME` or `-c <path>` CLI flag.
+- **Location: `./hamana.toml`** next to the exe, overridable via `HAMANA_HOME` or `-c <path>` CLI flag.
 - **Keymap is a separate file** (`./keymap.toml`) so power users can share bindings without leaking other settings.
 
 ## Testing discipline

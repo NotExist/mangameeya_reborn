@@ -7,7 +7,7 @@
 //! Instruments KeyDown → submit-return latency, prints each event to stderr.
 
 use anyhow::Result;
-use mangameeya_reborn::{archive::ZipPageSource, decode};
+use hamana_reborn::{archive::ZipPageSource, decode};
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Instant;
@@ -326,7 +326,7 @@ impl ApplicationHandler for App {
             return;
         }
         let attrs = Window::default_attributes()
-            .with_title("spike_gpu — MangaMeeya Reborn Phase 1b")
+            .with_title("spike_gpu — Hamana Reborn Phase 1b")
             .with_inner_size(winit::dpi::PhysicalSize::new(1920u32, 1080u32));
         let window = Arc::new(event_loop.create_window(attrs).expect("window"));
         let state = pollster::block_on(GpuState::new(window.clone())).expect("gpu init");
@@ -419,7 +419,7 @@ fn main() -> Result<()> {
     let fixture = PathBuf::from(
         args.get(1)
             .cloned()
-            .or_else(|| std::env::var("MANGAMEEYA_BENCH_FIXTURE").ok())
+            .or_else(|| std::env::var("HAMANA_BENCH_FIXTURE").ok())
             .unwrap_or_else(|| "bench-fixture.zip".into()),
     );
     eprintln!("[spike_gpu] fixture: {}", fixture.display());

@@ -79,7 +79,7 @@ Phase 1a baseline 量測（GHA ubuntu-latest）：
    - 個別 crate 走 `[patch.crates-io]` 暫時 fork
 
 4. **Release 流程整合**
-   - GHA artifact `mangameeya-{version}-win7-best-effort.zip`
+   - GHA artifact `hamana-{version}-win7-best-effort.zip`
    - Release notes 明確標 best-effort、unsupported、社群維護優先
    - 提供回報 issue template 給其他 Win7 user
 

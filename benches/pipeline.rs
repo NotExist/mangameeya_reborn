@@ -1,5 +1,5 @@
 use criterion::{Criterion, criterion_group, criterion_main};
-use mangameeya_reborn::{decode, fixture};
+use hamana_reborn::{decode, fixture};
 use std::path::Path;
 use std::sync::OnceLock;
 

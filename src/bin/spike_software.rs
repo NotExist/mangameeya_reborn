@@ -8,7 +8,7 @@
 //! Home = first, End = last, Esc = quit. stderr logs each KeyDown→present.
 
 use anyhow::Result;
-use mangameeya_reborn::{archive::ZipPageSource, decode};
+use hamana_reborn::{archive::ZipPageSource, decode};
 use softbuffer::{Context, Surface};
 use std::num::NonZeroU32;
 use std::path::PathBuf;
@@ -151,7 +151,7 @@ impl ApplicationHandler for App {
             return;
         }
         let attrs = Window::default_attributes()
-            .with_title("spike_software — MangaMeeya Reborn legacy")
+            .with_title("spike_software — Hamana Reborn legacy")
             .with_inner_size(winit::dpi::PhysicalSize::new(1280u32, 800u32));
         let window = Arc::new(event_loop.create_window(attrs).expect("create_window"));
         let context = Context::new(window.clone()).expect("softbuffer Context");
@@ -243,7 +243,7 @@ fn main() -> Result<()> {
     let fixture = PathBuf::from(
         args.get(1)
             .cloned()
-            .or_else(|| std::env::var("MANGAMEEYA_BENCH_FIXTURE").ok())
+            .or_else(|| std::env::var("HAMANA_BENCH_FIXTURE").ok())
             .unwrap_or_else(|| "bench-fixture.zip".into()),
     );
     eprintln!("[spike_software] fixture: {}", fixture.display());

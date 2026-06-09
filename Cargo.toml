@@ -1,8 +1,8 @@
 [package]
-name = "mangameeya_reborn"
+name = "hamana_reborn"
 version = "0.1.0"
 edition = "2024"
-description = "Modern Rust rewrite of MangaMeeya — Phase 1 disposable CPU spike"
+description = "Hamana-style image/manga viewer in Rust (with mangameeya-inspired archive support and keyboard ergonomics)"
 publish = false
 
 [features]

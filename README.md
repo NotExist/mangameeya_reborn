@@ -1,6 +1,8 @@
-# MangaMeeya Reborn
+# Hamana Reborn
 
-用現代技術重現 Windows 上已年久失修的漫畫閱讀器 **マンガミーヤ (MangaMeeya)**。
+用現代 Rust 重建 **Hamana**（はまな，宮野牧人作，2006 停更）風格的漫畫/圖像閱讀器：浮動 auto-hide overlay、IMAGE SEEK BAR、GPU 加速的無延遲 zoom/pan。
+
+格式支援與鍵盤操作的部分借鏡已停更的 **マンガミーヤ (MangaMeeya)** — ZIP/CBZ/RAR/CBR 直讀、全鍵盤導航、低延遲翻頁。mangameeya 僅作為設計借鏡，本專案不以 reimplement mangameeya 為目標。
 
 ## Status
 

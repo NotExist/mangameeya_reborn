@@ -4,7 +4,7 @@
 //!   gen_fixture <output.zip> [normal_count=220] [extreme_count=30]
 
 use anyhow::{Context, Result};
-use mangameeya_reborn::fixture::synthesize_page;
+use hamana_reborn::fixture::synthesize_page;
 use rayon::prelude::*;
 use std::fs::File;
 use std::io::Write;

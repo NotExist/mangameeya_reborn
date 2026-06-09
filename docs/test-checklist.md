@@ -23,7 +23,7 @@ CI 上跑不出來的事項，集中在這裡，待你有實體 Windows / Mac / 
 bench fixture 不在 repo。三選一：
 - **option A (推薦)**：拿一本實際 manga zip（含 CJK 檔名），記下絕對路徑
 - **option B**：執行 `cargo run --release --bin gen_fixture -- ./bench-fixture.zip` 產生合成 fixture（~1.3GB，無 CJK 檔名）
-- **option C**：設環境變數 `MANGAMEEYA_BENCH_FIXTURE=/path/to/your.zip`
+- **option C**：設環境變數 `HAMANA_BENCH_FIXTURE=/path/to/your.zip`
 
 所有 spike binary 都接受 `<fixture-path>` 為第一參數或讀 env。
 

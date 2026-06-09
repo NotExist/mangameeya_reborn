@@ -7,7 +7,7 @@
 //! Output: pretty-printed JSON to stdout. Log lines go to stderr.
 
 use anyhow::Result;
-use mangameeya_reborn::{archive::ZipPageSource, decode, metrics::*};
+use hamana_reborn::{archive::ZipPageSource, decode, metrics::*};
 use rayon::prelude::*;
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
